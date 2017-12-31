@@ -2,6 +2,7 @@ import PIL
 from PIL import Image, ImageDraw
 import random
 import math
+from tree import Tree
 
 height = 20
 width = 20
@@ -18,14 +19,23 @@ def main():
 def makeMaze(startX = 0, startY = 0):
 	currentTile = squares[startX][startY]
 	optionsExist = True
+	backTrackTree = Tree( None, currentTile )
 	while ( optionsExist ):
 		possibleMoves = list(squareManager.getIsolatedNeighbors(currentTile.x, currentTile.y))
 		if ( len(possibleMoves) > 0 ):
 			move = random.choice( possibleMoves )
-			squareManager.removeWall(currentTile.x, currentTile.y, move[1])
 			currentTile = move[0]
+
+			squareManager.removeWall(currentTile.x, currentTile.y, move[1])
+			treeNode = Tree( backTrackTree, currentTile )
+			backTrackTree = treeNode
+			print(currentTile.x, currentTile.y)
 		else: 
-			optionsExist = False
+			if ( backTrackTree.parent != None ):
+				backTrackTree = backTrackTree.parent
+				currentTile = backTrackTree.value
+			else:
+				optionsExist = False
 
 	
 
