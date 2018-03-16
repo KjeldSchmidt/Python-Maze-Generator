@@ -10,6 +10,8 @@ sidelength = 25
 pixelHeight = height*sidelength+2
 pixelWidth = width*sidelength+2
 
+colorsNeeded = height*width
+
 
 def main():
     image = Image.new("RGB", (pixelWidth, pixelHeight), "white")
@@ -17,6 +19,10 @@ def main():
     makeMaze()
     squareRenderer.render(draw, squares)
     image.save("image.png")
+
+def getColor(index):
+    hue = 360 * (index/colorsNeeded)
+    return 'hsl(' + str(int(hue)) + ', 100%, 25%)'
 
 
 def makeMaze(startX=0, startY=0):
@@ -28,12 +34,15 @@ def makeMaze(startX=0, startY=0):
     currentTile = squares[startX][startY]
     moveOptionsExist = True
     backtrackTree = ParentPointerTree(None, currentTile)
+    index = 0;
     while (moveOptionsExist):
         possibleMoves = squareManager.getIsolatedNeighbors(currentTile)
         if (len(possibleMoves) > 0):
+            index += 1
             move = random.choice(possibleMoves)
             squareManager.removeWall(currentTile, move[1])
             currentTile = move[0]
+            squareManager.setIndex(currentTile, index)
             backtrackTree = ParentPointerTree(backtrackTree, currentTile)
         else: 
             if (backtrackTree.parent != None):
@@ -80,6 +89,11 @@ class SquareManager():
         y = y + direction[1][1]
         squares[x][y].removeWall(direction[2])
 
+    def setIndex(self, square, index):
+        x = square.x
+        y = square.y
+        squares[x][y].index = index
+
 
 class Square():
     def __init__(self, x, y, sidelength):
@@ -89,6 +103,7 @@ class Square():
         self.py = y * sidelength
         # Up, Right, Bottom, Left, as used in CSS
         self.walls = [True, True, True, True]
+        self.index = 0
 
     def removeWall(self, wallIndex):
         self.walls[wallIndex] = False
@@ -108,6 +123,10 @@ class SquareRenderer():
     def drawSquare(self, square, draw):
         s = square
         w = sidelength
+
+        index = s.index
+        color = getColor(index)
+        draw.rectangle((s.px, s.py, s.px+w, s.py+w), fill=color)
         if s.walls[0]: draw.line((s.px, s.py, s.px+w, s.py), "black", 2)
         if s.walls[1]: draw.line((s.px+w, s.py, s.px+w, s.py+w), "black", 2)
         if s.walls[2]: draw.line((s.px, s.py+w, s.px+w, s.py+w), "black", 2)
